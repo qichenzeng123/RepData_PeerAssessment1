@@ -1,25 +1,160 @@
 ---
-title: "Reproducible Research: Peer Assessment 1"
-output: 
-  html_document:
-    keep_md: true
+title: "Reproducible Research project 1"
+author: "Qichen Zeng"
+date: "April 21, 2017"
+output:
+  html_document: default
+  pdf_document: default
 ---
 
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
 
-## Loading and preprocessing the data
-
-
+## Read in File
+```{r}
+library(ggplot2)
+df <- read.csv("C:/Users/qiche/Desktop/activity.csv")
+df$date <- as.Date(df$date, "%m/%d/%Y")
+```
 
 ## What is mean total number of steps taken per day?
 
+```{r}
+library (dplyr)
+Day <- df %>% group_by(date) %>%
+          summarize(total.steps = sum(steps, na.rm = T), 
+          mean.steps = mean(steps, na.rm = T))
+
+```
+
+## > summary(Day$total.steps)
+##   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+## 570600  570600  570600  570600  570600  570600 
+## > summary(Day$mean.steps)
+##   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+##  37.38   37.38   37.38   37.38   37.38   37.38 
 
 
+## Histgram of the total number of steps taken
+```{r}
+library(ggplot2)
+graph1 <- ggplot(Day, aes(x=total.steps))
+graph1 + geom_histogram(binwidth = 3000) + theme(axis.text = element_text(size = 10),  
+      axis.title = element_text(size = 10)) + labs(y = "Freq") + labs(x = "Steps")
+```
+
+
+## The mean and median of the total number of steps taken per day
+```{r}
+summary(Day$total.steps)
+summary(Day$mean.steps)
+```
+##   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+## 570600  570600  570600  570600  570600  570600 
+##   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+##  37.38   37.38   37.38   37.38   37.38   37.38
+
+\newpage
 ## What is the average daily activity pattern?
+```{r}
+intervaldf <- df %>% group_by(interval) %>%
+      summarize(mean.steps = mean(steps, na.rm = T))
+graph2 <- ggplot(intervaldf, aes(x = interval, y = mean.steps))
+graph2 + geom_line() + theme(axis.text = element_text(size = 10), 
+      axis.title = element_text(size = 10, face = "bold")) + 
+      labs(y = "Step Mean") + labs(x = "Average 5 min Interval")
+```
 
 
+\newpage
+##Imputing missing values
 
-## Imputing missing values
+##Calculate and report the total number of missing values in the dataset (i.e. the total number of rows with NAs)
+```{r}
+mean(is.na(df$steps))
+sum(is.na(df$steps))
+sum(is.na(intervaldf$mean.steps))
+```
+
+##
+## Which 5-minute interval, on average across all the days in the dataset, contains the maximum number of steps?
+## From the timeseries chart, looks like the largest amount occurs within 500 and 1000
+
+## [1] 0.1311475
+## [1] 2304
+## [1] 0
 
 
+## fill in the NA
+
+## I filled in the NA using a for loop and using the is.na function
+```{r}
+nona <- df
+for (i in 1:nrow(nona)) {
+      if (is.na(nona$steps[i])) {
+            index <- nona$interval[i]
+            value <- subset(intervaldf, interval==index)
+            nona$steps[i] <- value$mean.steps
+      }
+}
+```
+
+## Histogram for total number of steps taken
+```{r}
+newAvg <- nona %>% group_by(date) %>%
+      summarize(total.steps = sum(steps, na.rm = T))
+graph3 <- ggplot(newAvg, aes(x=total.steps))
+graph3 + geom_histogram(binwidth = 3000) + theme(axis.text = element_text(size = 10),
+      axis.title = element_text(size = 10)) + labs(y = "Freq") + labs(x = "Steps per day")
+```
+
+```{r}
+summary (df$total.steps)
+sd(df$total.steps, na.rm=T)
+summary (newAvg$total.steps)
+sd(newAvg$total.steps, na.rm=T)
+```
+
+## ## Length  Class   Mode 
+##      0   NULL   NULL
+
+## [1] NA
+
+## [1] 3974.391
+
+
+## The mean and med stayed the same, however the the data become closer to the mean. The new data have smaller std, therefore the effect of the filled in NA with mean decreased the spread
+
+\newpage 
 
 ## Are there differences in activity patterns between weekdays and weekends?
+
+```{r}
+nona$day <- ifelse(weekdays(nona$date) %in% c("Saturday", "Sunday"), "weekend", "weekday")
+
+weekends <- filter(nona, day == "weekend")
+weekdays <- filter(nona, day == "weekday")
+
+weekends <- weekends %>%
+      group_by(interval) %>%
+      summarize(mean.steps = mean(steps)) 
+weekends$day <- "weekend"
+
+weekdays <- weekdays %>%
+      group_by(interval) %>%
+      summarize(mean.steps = mean(steps)) 
+weekdays$day <- "weekday"
+
+bindeddata <- rbind(weekends, weekdays)
+bindeddata$day <- as.factor(bindeddata$day)
+bindeddata$day <- relevel(bindeddata$day, "weekend")
+
+
+graph4 <- ggplot (bindeddata, aes (interval, mean.steps))
+graph4 + geom_line() + facet_grid (day~.) + theme(axis.text = element_text(size = 10), 
+      axis.title = element_text(size = 10)) + labs(y = "Steps") + labs(x = "Average Interval")
+```
+
+## Yes the patterns are different from weekdays and weekends, however, the peek intervals are still around 500-1000
+
