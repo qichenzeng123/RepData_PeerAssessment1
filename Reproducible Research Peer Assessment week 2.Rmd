@@ -1,7 +1,7 @@
 ---
 title: "Reproducible Research project 1"
 author: "Qichen Zeng"
-date: "April 20, 2017"
+date: "April 21, 2017"
 output:
   html_document: default
   pdf_document: default
@@ -24,10 +24,17 @@ df$date <- as.Date(df$date, "%m/%d/%Y")
 library (dplyr)
 Day <- df %>% group_by(date) %>%
           summarize(total.steps = sum(steps, na.rm = T), 
-
           mean.steps = mean(steps, na.rm = T))
 
 ```
+
+## > summary(Day$total.steps)
+##   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+## 570600  570600  570600  570600  570600  570600 
+## > summary(Day$mean.steps)
+##   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+##  37.38   37.38   37.38   37.38   37.38   37.38 
+
 
 ## Histgram of the total number of steps taken
 ```{r}
@@ -43,7 +50,10 @@ graph1 + geom_histogram(binwidth = 3000) + theme(axis.text = element_text(size =
 summary(Day$total.steps)
 summary(Day$mean.steps)
 ```
-
+##   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+## 570600  570600  570600  570600  570600  570600 
+##   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+##  37.38   37.38   37.38   37.38   37.38   37.38
 
 \newpage
 ## What is the average daily activity pattern?
@@ -57,8 +67,6 @@ graph2 + geom_line() + theme(axis.text = element_text(size = 10),
 ```
 
 
-
-
 \newpage
 ##Imputing missing values
 
@@ -68,13 +76,19 @@ mean(is.na(df$steps))
 sum(is.na(df$steps))
 sum(is.na(intervaldf$mean.steps))
 ```
+
+##
 ## Which 5-minute interval, on average across all the days in the dataset, contains the maximum number of steps?
 ## From the timeseries chart, looks like the largest amount occurs within 500 and 1000
 
+## [1] 0.1311475
+## [1] 2304
+## [1] 0
 
 
+## fill in the NA
 
-##fill in the NA
+## I filled in the NA using a for loop and using the is.na function
 ```{r}
 nona <- df
 for (i in 1:nrow(nona)) {
@@ -86,7 +100,7 @@ for (i in 1:nrow(nona)) {
 }
 ```
 
-##Histogram for total number of steps taken
+## Histogram for total number of steps taken
 ```{r}
 newAvg <- nona %>% group_by(date) %>%
       summarize(total.steps = sum(steps, na.rm = T))
@@ -97,13 +111,19 @@ graph3 + geom_histogram(binwidth = 3000) + theme(axis.text = element_text(size =
 
 ```{r}
 summary (df$total.steps)
-
 sd(df$total.steps, na.rm=T)
-
 summary (newAvg$total.steps)
-
 sd(newAvg$total.steps, na.rm=T)
 ```
+
+## ## Length  Class   Mode 
+##      0   NULL   NULL
+
+## [1] NA
+
+## [1] 3974.391
+
+
 ## The mean and med stayed the same, however the the data become closer to the mean. The new data have smaller std, therefore the effect of the filled in NA with mean decreased the spread
 
 \newpage 
